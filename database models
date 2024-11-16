@@ -1,0 +1,43 @@
+from sqlalchemy import create_engine, Column, Integer, String, ForeignKey, Boolean
+from sqlalchemy.orm import relationship, sessionmaker
+from sqlalchemy.ext.declarative import declarative_base
+
+Base = declarative_base()
+
+class User(Base):
+    __tablename__ = 'users'
+    
+    id = Column(Integer, primary_key=True, index=True)
+    username = Column(String, unique=True, index=True)
+    email = Column(String, unique=True, index=True)
+    password_hash = Column(String)
+    role = Column(String, default='client')
+    email_verified = Column(Boolean, default=False)
+    
+    files = relationship("File", back_populates="uploaded_by")
+    download_links = relationship("DownloadLink", back_populates="client_user")
+
+
+class File(Base):
+    __tablename__ = 'files'
+    
+    id = Column(Integer, primary_key=True, index=True)
+    filename = Column(String)
+    file_path = Column(String)
+    uploaded_by_id = Column(Integer, ForeignKey('users.id'))
+    
+    uploaded_by = relationship("User", back_populates="files")
+    download_links = relationship("DownloadLink", back_populates="file")
+
+
+class DownloadLink(Base):
+    __tablename__ = 'download_links'
+    
+    id = Column(Integer, primary_key=True, index=True)
+    file_id = Column(Integer, ForeignKey('files.id'))
+    client_user_id = Column(Integer, ForeignKey('users.id'))
+    token = Column(String)
+    expires_at = Column(Integer)
+    
+    file = relationship("File", back_populates="download_links")
+    client_user = relationship("User", back_populates="download_links")
